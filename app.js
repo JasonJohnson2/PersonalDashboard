@@ -22,8 +22,13 @@ const state = {
   searchTimer: null,
 };
 
-// ── Mock NBA Data (replace with real API in Phase 2) ───
-const MOCK_GAMES = [
+// ── NBA API Config ─────────────────────────────────────
+// Free key at https://www.balldontlie.io (30-second signup)
+const NBA_API_KEY = '';
+const NBA_API_BASE = 'https://api.balldontlie.io/v1';
+
+// Shown when no API key is configured
+const FALLBACK_GAMES = [
   { id: 1, away: 'Boston Celtics', awayCity: 'Boston', home: 'New York Knicks', homeCity: 'New York', awayScore: 112, homeScore: 108, status: 'Final', quarter: null },
   { id: 2, away: 'Golden State Warriors', awayCity: 'Golden State', home: 'Los Angeles Lakers', homeCity: 'Los Angeles', awayScore: 87, homeScore: 91, status: 'Live', quarter: 'Q3 4:22' },
   { id: 3, away: 'Miami Heat', awayCity: 'Miami', home: 'Chicago Bulls', homeCity: 'Chicago', awayScore: 0, homeScore: 0, status: 'Upcoming', quarter: '7:30 PM ET' },
@@ -31,7 +36,7 @@ const MOCK_GAMES = [
   { id: 5, away: 'Milwaukee Bucks', awayCity: 'Milwaukee', home: 'Philadelphia 76ers', homeCity: 'Philadelphia', awayScore: 104, homeScore: 99, status: 'Final', quarter: null },
 ];
 
-const MOCK_STANDINGS_EAST = [
+const FALLBACK_STANDINGS_EAST = [
   { rank: 1, team: 'Boston Celtics', wins: 58, losses: 14, gb: '-' },
   { rank: 2, team: 'New York Knicks', wins: 51, losses: 22, gb: '7.5' },
   { rank: 3, team: 'Cleveland Cavaliers', wins: 49, losses: 24, gb: '9.5' },
@@ -42,7 +47,7 @@ const MOCK_STANDINGS_EAST = [
   { rank: 8, team: 'Chicago Bulls', wins: 37, losses: 36, gb: '21.5' },
 ];
 
-const MOCK_STANDINGS_WEST = [
+const FALLBACK_STANDINGS_WEST = [
   { rank: 1, team: 'Oklahoma City Thunder', wins: 57, losses: 16, gb: '-' },
   { rank: 2, team: 'Los Angeles Lakers', wins: 52, losses: 22, gb: '5.5' },
   { rank: 3, team: 'Denver Nuggets', wins: 50, losses: 24, gb: '7.5' },
@@ -52,6 +57,72 @@ const MOCK_STANDINGS_WEST = [
   { rank: 7, team: 'Phoenix Suns', wins: 41, losses: 33, gb: '16.5' },
   { rank: 8, team: 'Sacramento Kings', wins: 38, losses: 36, gb: '19.5' },
 ];
+
+// ── NBA API: Normalize a balldontlie game object ────────
+function normalizeBDLGame(g) {
+  const away = g.visitor_team;
+  const home = g.home_team;
+  const raw = g.status || '';
+  let status, quarter;
+  if (raw === 'Final' || raw === 'Final/OT') {
+    status = 'Final'; quarter = null;
+  } else if (g.period > 0) {
+    status = 'Live';
+    quarter = g.time?.trim() ? `Q${g.period} ${g.time.trim()}` : `Q${g.period}`;
+  } else {
+    status = 'Upcoming'; quarter = raw;
+  }
+  return {
+    id: g.id,
+    away: away.full_name || `${away.city} ${away.name}`,
+    awayCity: away.city,
+    home: home.full_name || `${home.city} ${home.name}`,
+    homeCity: home.city,
+    awayScore: g.visitor_team_score || 0,
+    homeScore: g.home_team_score || 0,
+    status, quarter,
+  };
+}
+
+// ── NBA API: Fetch today's games ────────────────────────
+async function fetchNBAGames() {
+  const today = new Date().toISOString().split('T')[0];
+  const res = await fetch(`${NBA_API_BASE}/games?dates[]=${today}&per_page=100`, {
+    headers: { Authorization: NBA_API_KEY },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  return (json.data || []).map(normalizeBDLGame);
+}
+
+// ── NBA API: Fetch standings ────────────────────────────
+async function fetchNBAStandings() {
+  const now = new Date();
+  const season = now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+  const res = await fetch(`${NBA_API_BASE}/standings?season=${season}`, {
+    headers: { Authorization: NBA_API_KEY },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  const east = [], west = [];
+  for (const s of (json.data || [])) {
+    const entry = { team: s.team.full_name, wins: s.wins, losses: s.losses, gb: '-' };
+    (s.team.conference === 'East' ? east : west).push(entry);
+  }
+  const rankAndGB = (arr) => {
+    arr.sort((a, b) => b.wins - a.wins || a.losses - b.losses);
+    const leader = arr[0];
+    arr.forEach((row, i) => {
+      row.rank = i + 1;
+      if (i > 0) {
+        const gb = ((leader.wins - row.wins) + (row.losses - leader.losses)) / 2;
+        row.gb = gb % 1 === 0 ? String(gb) : gb.toFixed(1);
+      }
+    });
+    return arr;
+  };
+  return { east: rankAndGB(east), west: rankAndGB(west) };
+}
 
 // ── Navigation ─────────────────────────────────────────
 function navigateTo(section) {
@@ -158,25 +229,51 @@ function renderFullGameCard(game, favoriteTeam) {
     </div>`;
 }
 
+// ── NBA: Auto-refresh timer ────────────────────────────
+let refreshTimer = null;
+
+function scheduleRefresh(hasLive) {
+  clearTimeout(refreshTimer);
+  const hour = new Date().getHours();
+  const isGameWindow = hour >= 19 || hour < 1;
+  if (hasLive || isGameWindow) {
+    refreshTimer = setTimeout(loadGames, 60_000);
+  }
+}
+
 // ── NBA: Load today's games ────────────────────────────
-function loadGames() {
+async function loadGames() {
   const favoriteTeam = state.favoriteTeam;
-
-  // Overview: compact rows
   const listEl = document.getElementById('todayGamesList');
-  if (listEl) {
-    listEl.innerHTML = MOCK_GAMES.map(g => renderGameRow(g, favoriteTeam)).join('');
-  }
-
-  // NBA section: full cards
   const fullEl = document.getElementById('fullGamesList');
-  if (fullEl) {
-    fullEl.innerHTML = MOCK_GAMES.map(g => renderFullGameCard(g, favoriteTeam)).join('');
+  const statEl = document.getElementById('statGamesToday');
+
+  if (!NBA_API_KEY) {
+    const notice = `<a class="api-key-notice" href="https://www.balldontlie.io" target="_blank" rel="noopener">Add a free API key for live scores →</a>`;
+    if (listEl) listEl.innerHTML = FALLBACK_GAMES.map(g => renderGameRow(g, favoriteTeam)).join('') + notice;
+    if (fullEl) fullEl.innerHTML = FALLBACK_GAMES.map(g => renderFullGameCard(g, favoriteTeam)).join('') + notice;
+    if (statEl) statEl.textContent = FALLBACK_GAMES.length;
+    return;
   }
 
-  // Stat: games today
-  const statEl = document.getElementById('statGamesToday');
-  if (statEl) statEl.textContent = MOCK_GAMES.length;
+  try {
+    const games = await fetchNBAGames();
+    const html = games.length
+      ? games.map(g => renderGameRow(g, favoriteTeam)).join('')
+      : '<div class="loading-msg">No games scheduled today.</div>';
+    const htmlFull = games.length
+      ? games.map(g => renderFullGameCard(g, favoriteTeam)).join('')
+      : '<div class="loading-msg">No games scheduled today.</div>';
+    if (listEl) listEl.innerHTML = html;
+    if (fullEl) fullEl.innerHTML = htmlFull;
+    if (statEl) statEl.textContent = games.length;
+    scheduleRefresh(games.some(g => g.status === 'Live'));
+  } catch (err) {
+    console.error('NBA games error:', err);
+    const errHtml = '<div class="loading-msg" style="color:var(--text-2)">Couldn\'t load games. Check your API key.</div>';
+    if (listEl) listEl.innerHTML = errHtml;
+    if (fullEl) fullEl.innerHTML = errHtml;
+  }
 }
 
 // ── NBA: Load standings ────────────────────────────────
@@ -205,10 +302,21 @@ function renderStandingsFull(data, elId) {
     </tr>`).join('');
 }
 
-function loadStandings() {
-  renderStandingsMini(MOCK_STANDINGS_EAST, 'standingsMiniEast');
-  renderStandingsFull(MOCK_STANDINGS_EAST, 'standingsEast');
-  renderStandingsFull(MOCK_STANDINGS_WEST, 'standingsWest');
+async function loadStandings() {
+  if (!NBA_API_KEY) {
+    renderStandingsMini(FALLBACK_STANDINGS_EAST, 'standingsMiniEast');
+    renderStandingsFull(FALLBACK_STANDINGS_EAST, 'standingsEast');
+    renderStandingsFull(FALLBACK_STANDINGS_WEST, 'standingsWest');
+    return;
+  }
+  try {
+    const { east, west } = await fetchNBAStandings();
+    renderStandingsMini(east, 'standingsMiniEast');
+    renderStandingsFull(east, 'standingsEast');
+    renderStandingsFull(west, 'standingsWest');
+  } catch (err) {
+    console.error('NBA standings error:', err);
+  }
 }
 
 // ── Backlog: Save ──────────────────────────────────────

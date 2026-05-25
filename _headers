@@ -16,7 +16,7 @@
 
   # Content Security Policy — controls what resources the browser is allowed to load
   # Allows: your own files, Google Fonts, the RAWG API, balldontlie NBA API
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://media.rawg.io data:; connect-src 'self' https://api.rawg.io https://www.balldontlie.io; frame-ancestors 'none';
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://media.rawg.io data:; connect-src 'self' https://api.rawg.io https://api.balldontlie.io https://www.balldontlie.io; frame-ancestors 'none';
 
   # XSS protection (older browsers — modern ones use CSP instead)
   X-XSS-Protection: 1; mode=block

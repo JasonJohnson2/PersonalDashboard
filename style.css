@@ -787,6 +787,17 @@ input, select { font-family: var(--font-body); }
   font-size: 0.82rem;
 }
 
+.api-key-notice {
+  display: block;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 0.78rem;
+  color: var(--accent);
+  opacity: 0.75;
+  text-decoration: none;
+}
+.api-key-notice:hover { opacity: 1; }
+
 /* ── Hidden utility ─────────────────────────────────── */
 .hidden { display: none !important; }
 

@@ -1,0 +1,22 @@
+/*
+  # Prevent clickjacking — stops your site being embedded in iframes on other domains
+  X-Frame-Options: DENY
+
+  # Stop browsers from guessing file types (prevents MIME-type attacks)
+  X-Content-Type-Options: nosniff
+
+  # Don't send your URL to external sites in the Referer header
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Restrict access to browser APIs you don't need
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+
+  # Force HTTPS for 1 year (only enable once you have a custom domain with SSL)
+  # Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+  # Content Security Policy — controls what resources the browser is allowed to load
+  # Allows: your own files, Google Fonts, the RAWG API, balldontlie NBA API
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://media.rawg.io data:; connect-src 'self' https://api.rawg.io https://www.balldontlie.io; frame-ancestors 'none';
+
+  # XSS protection (older browsers — modern ones use CSP instead)
+  X-XSS-Protection: 1; mode=block

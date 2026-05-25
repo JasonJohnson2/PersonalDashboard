@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Court & Controller</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">🏀</span>
+      <span class="brand-text">Court &amp;<br>Controller</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-section="overview">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </a>
+      <a href="#" class="nav-item" data-section="nba">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18M12 3a9 9 0 0 0 0 18M3 12h18"/></svg>
+        NBA
+      </a>
+      <a href="#" class="nav-item" data-section="games">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M8 12h2m2 0h2M17 10v4"/></svg>
+        Games
+      </a>
+      <a href="#" class="nav-item" data-section="favorites">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Favorites
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <span class="theme-icon">☀</span>
+        <span class="theme-label">Light mode</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-title">
+          <h1 id="sectionTitle">Overview</h1>
+          <span class="topbar-date" id="currentDate"></span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          <span>Live</span>
+        </div>
+        <div class="search-wrap">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" class="search-input" placeholder="Search games, players…" />
+        </div>
+      </div>
+    </header>
+
+    <!-- Overview Section -->
+    <section class="section active" id="section-overview">
+
+      <!-- Stat strip -->
+      <div class="stat-strip">
+        <div class="stat-item">
+          <span class="stat-value" id="statGamesToday">—</span>
+          <span class="stat-label">Games today</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value accent" id="statFavorite">—</span>
+          <span class="stat-label">Your team</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value" id="statBacklog">0</span>
+          <span class="stat-label">In backlog</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value" id="statPlaying">0</span>
+          <span class="stat-label">Playing now</span>
+        </div>
+      </div>
+
+      <div class="content-grid">
+
+        <!-- Today's games -->
+        <div class="card card--wide">
+          <div class="card-header">
+            <span class="card-title">Today's games</span>
+            <span class="card-tag nba-tag">NBA</span>
+          </div>
+          <div class="games-list" id="todayGamesList">
+            <!-- Skeleton loaders -->
+            <div class="game-row skeleton-row">
+              <div class="skeleton skeleton--team"></div>
+              <div class="skeleton skeleton--score"></div>
+              <div class="skeleton skeleton--team"></div>
+            </div>
+            <div class="game-row skeleton-row">
+              <div class="skeleton skeleton--team"></div>
+              <div class="skeleton skeleton--score"></div>
+              <div class="skeleton skeleton--team"></div>
+            </div>
+            <div class="game-row skeleton-row">
+              <div class="skeleton skeleton--team"></div>
+              <div class="skeleton skeleton--score"></div>
+              <div class="skeleton skeleton--team"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Currently playing -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Now playing</span>
+            <span class="card-tag game-tag">Games</span>
+          </div>
+          <div id="nowPlayingList" class="backlog-mini-list">
+            <div class="empty-state">
+              <span class="empty-icon">🎮</span>
+              <p>No games in progress.<br>Add one from your backlog.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Standings preview -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">East standings</span>
+            <a href="#" class="card-link" data-section="nba">See all →</a>
+          </div>
+          <div class="standings-mini" id="standingsMiniEast">
+            <div class="standings-row skeleton-row">
+              <div class="skeleton" style="width:120px;height:14px;border-radius:4px"></div>
+              <div class="skeleton" style="width:40px;height:14px;border-radius:4px"></div>
+            </div>
+            <div class="standings-row skeleton-row">
+              <div class="skeleton" style="width:100px;height:14px;border-radius:4px"></div>
+              <div class="skeleton" style="width:40px;height:14px;border-radius:4px"></div>
+            </div>
+            <div class="standings-row skeleton-row">
+              <div class="skeleton" style="width:110px;height:14px;border-radius:4px"></div>
+              <div class="skeleton" style="width:40px;height:14px;border-radius:4px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent backlog -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Recent backlog</span>
+            <a href="#" class="card-link" data-section="games">See all →</a>
+          </div>
+          <div id="recentBacklogList" class="backlog-mini-list">
+            <div class="empty-state">
+              <span class="empty-icon">📋</span>
+              <p>No games added yet.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- NBA Section -->
+    <section class="section" id="section-nba">
+      <div class="section-controls">
+        <div class="tab-group">
+          <button class="tab active" data-tab="scores">Scores</button>
+          <button class="tab" data-tab="standings">Standings</button>
+        </div>
+      </div>
+
+      <div class="tab-panel active" id="tab-scores">
+        <div class="games-full" id="fullGamesList">
+          <div class="loading-msg">Loading today's games…</div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-standings">
+        <div class="standings-grid">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Eastern conference</span>
+            </div>
+            <table class="standings-table" id="standingsEast">
+              <thead><tr><th>#</th><th>Team</th><th>W</th><th>L</th><th>GB</th></tr></thead>
+              <tbody><tr><td colspan="5" class="loading-msg">Loading…</td></tr></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Western conference</span>
+            </div>
+            <table class="standings-table" id="standingsWest">
+              <thead><tr><th>#</th><th>Team</th><th>W</th><th>L</th><th>GB</th></tr></thead>
+              <tbody><tr><td colspan="5" class="loading-msg">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Games Section -->
+    <section class="section" id="section-games">
+      <div class="section-controls">
+        <div class="search-games-wrap">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="gameSearchInput" class="search-input search-input--large" placeholder="Search for a game to add…" />
+        </div>
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="playing">Playing</button>
+          <button class="filter-btn" data-filter="completed">Completed</button>
+          <button class="filter-btn" data-filter="want">Want to play</button>
+        </div>
+      </div>
+
+      <!-- Search results -->
+      <div id="gameSearchResults" class="search-results hidden"></div>
+
+      <!-- Backlog -->
+      <div id="backlogGrid" class="backlog-grid">
+        <div class="empty-state empty-state--large">
+          <span class="empty-icon">🎮</span>
+          <p>Your backlog is empty.<br>Search for a game above to get started.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Favorites Section -->
+    <section class="section" id="section-favorites">
+      <div class="favorites-grid">
+        <div class="card card--accent">
+          <div class="card-header">
+            <span class="card-title">Your NBA team</span>
+          </div>
+          <div class="team-picker">
+            <p class="picker-hint">Pick a team to follow — their games will be highlighted on your dashboard.</p>
+            <select id="teamPicker" class="team-select">
+              <option value="">Select a team…</option>
+              <option>Atlanta Hawks</option><option>Boston Celtics</option>
+              <option>Brooklyn Nets</option><option>Charlotte Hornets</option>
+              <option>Chicago Bulls</option><option>Cleveland Cavaliers</option>
+              <option>Dallas Mavericks</option><option>Denver Nuggets</option>
+              <option>Detroit Pistons</option><option>Golden State Warriors</option>
+              <option>Houston Rockets</option><option>Indiana Pacers</option>
+              <option>LA Clippers</option><option>Los Angeles Lakers</option>
+              <option>Memphis Grizzlies</option><option>Miami Heat</option>
+              <option>Milwaukee Bucks</option><option>Minnesota Timberwolves</option>
+              <option>New Orleans Pelicans</option><option>New York Knicks</option>
+              <option>Oklahoma City Thunder</option><option>Orlando Magic</option>
+              <option>Philadelphia 76ers</option><option>Phoenix Suns</option>
+              <option>Portland Trail Blazers</option><option>Sacramento Kings</option>
+              <option>San Antonio Spurs</option><option>Toronto Raptors</option>
+              <option>Utah Jazz</option><option>Washington Wizards</option>
+            </select>
+            <div id="favoriteTeamDisplay" class="favorite-team-card hidden"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Notification settings</span>
+          </div>
+          <div class="settings-list">
+            <label class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Game start alerts</span>
+                <span class="setting-desc">Get notified when your team tips off</span>
+              </div>
+              <div class="toggle" id="toggleGameStart">
+                <div class="toggle-thumb"></div>
+              </div>
+            </label>
+            <label class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Score updates</span>
+                <span class="setting-desc">Live quarter-by-quarter updates</span>
+              </div>
+              <div class="toggle" id="toggleScores">
+                <div class="toggle-thumb"></div>
+              </div>
+            </label>
+            <label class="setting-row">
+              <div class="setting-info">
+                <span class="setting-name">Backlog reminders</span>
+                <span class="setting-desc">Weekly nudge about your want-to-play list</span>
+              </div>
+              <div class="toggle" id="toggleBacklog">
+                <div class="toggle-thumb"></div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

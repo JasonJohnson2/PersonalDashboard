@@ -4,3 +4,6 @@
 !.dev.vars.example
 .env*
 !.env.example
+
+# API key config — never commit
+js/config.js
